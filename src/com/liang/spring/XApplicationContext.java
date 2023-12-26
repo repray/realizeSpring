@@ -2,6 +2,7 @@ package com.liang.spring;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -9,12 +10,14 @@ public class XApplicationContext {
 
     private Class config;
 
-    private ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap;
+    private ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+
+    private ConcurrentHashMap<String, Object> singletonObjects = new ConcurrentHashMap<>();
 
     public XApplicationContext(Class config) {
         this.config = config;
 
-        //扫描
+        //扫描,将扫描到的bean放入beanDefinitionMap
         if (config.isAnnotationPresent(ComponentScan.class)) {
             ComponentScan componentScanAnnotation = (ComponentScan) config.getAnnotation(ComponentScan.class);
             //扫描路径
@@ -33,7 +36,6 @@ public class XApplicationContext {
 
                         String className = fileName.substring(fileName.indexOf("com"), fileName.indexOf(".class"));
                         className = className.replace("\\", ".");
-                        System.out.println(className);
                         try {
                             Class<?> clazz = classLoader.loadClass(className);
                             //如果存在Component注解,则说明是bean对象
@@ -41,6 +43,9 @@ public class XApplicationContext {
 
                                 Component component = clazz.getAnnotation(Component.class);
                                 String beanName = component.value();
+
+
+
                                 BeanDefinition beanDefinition = new BeanDefinition();
                                 beanDefinition.setType(clazz);
                                 //判断bean是单例还是多例
@@ -50,24 +55,63 @@ public class XApplicationContext {
                                 }
                                 //没有scope注解,则默认是单例
                                 else {
-                                    beanDefinition.setScope("singletion");
+                                    beanDefinition.setScope("singleton");
                                 }
-                                beanDefinitionMap.put(beanName,beanDefinition);
+                                beanDefinitionMap.put(beanName, beanDefinition);
 
                             }
                         } catch (ClassNotFoundException e) {
                             throw new RuntimeException(e);
                         }
-
                     }
                 }
-
             }
+        }
+
+        //实例化单例bean
+        for (String beanName : beanDefinitionMap.keySet()) {
+            BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
+            Object bean = createBean(beanName, beanDefinition);
+            singletonObjects.put(beanName, bean);
         }
     }
 
+    private Object createBean(String beanName, BeanDefinition beanDefinition) {
+        Class clazz = beanDefinition.getType();
+        try {
+            Object object = clazz.getConstructor().newInstance();
+            return object;
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Object getBean(String beanName) {
-        return null;
+          BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
+        if (beanDefinition == null) {
+            throw new NullPointerException();
+        } else {
+            String scope = beanDefinition.getScope();
+            //获取单例bean
+            //先判断单例池中是否存在
+            if (scope.equals("singleton")) {
+                Object bean = singletonObjects.get(beanName);
+                if (bean == null) {
+                    bean = createBean(beanName, beanDefinition);
+                    singletonObjects.put(beanName, bean);
+                }
+                return bean;
+            }
+            //多例
+            else {
+                return createBean(beanName, beanDefinition);
+            }
+        }
     }
 }

@@ -4,6 +4,6 @@ import com.liang.spring.Component;
 import com.liang.spring.Scope;
 
 @Component("userService")
-@Scope("prototype")
+//@Scope("prototype")
 public class UserService {
 }
