@@ -6,9 +6,11 @@ public class Test {
     public static void main(String[] args) {
         XApplicationContext xApplicationContext = new XApplicationContext(AppConfig.class);
 //        UserService userservice = (UserService) xApplicationContext.getBean("userService");
-        System.out.println(xApplicationContext.getBean("userService"));
-        System.out.println(xApplicationContext.getBean("userService"));
-        System.out.println(xApplicationContext.getBean("userService"));
-        System.out.println(xApplicationContext.getBean("userService"));
+//        System.out.println(xApplicationContext.getBean("userService"));
+//        System.out.println(xApplicationContext.getBean("userService"));
+//        System.out.println(xApplicationContext.getBean("orderService"));
+
+        UserService userservice = (UserService) xApplicationContext.getBean("userService");
+        userservice.test();
     }
 }
