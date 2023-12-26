@@ -11,6 +11,6 @@ public class Test {
 //        System.out.println(xApplicationContext.getBean("orderService"));
 
         UserService userservice = (UserService) xApplicationContext.getBean("userService");
-        userservice.test();
+//        userservice.test();
     }
 }

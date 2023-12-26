@@ -6,6 +6,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class XApplicationContext {
@@ -15,6 +16,8 @@ public class XApplicationContext {
     private ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
 
     private ConcurrentHashMap<String, Object> singletonObjects = new ConcurrentHashMap<>();
+
+    private ArrayList<BeanPostProcesson> beanPostProcessonList = new ArrayList<>();
 
     public XApplicationContext(Class config) {
         this.config = config;
@@ -43,6 +46,11 @@ public class XApplicationContext {
                             //如果存在Component注解,则说明是bean对象
                             if (clazz.isAnnotationPresent(Component.class)) {
 
+                                if (BeanPostProcesson.class.isAssignableFrom(clazz)) {
+                                    BeanPostProcesson object = (BeanPostProcesson) clazz.newInstance();
+                                    beanPostProcessonList.add(object);
+
+                                }
                                 Component component = clazz.getAnnotation(Component.class);
                                 String beanName = component.value();
 
@@ -67,6 +75,10 @@ public class XApplicationContext {
 
                             }
                         } catch (ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        } catch (InstantiationException e) {
+                            throw new RuntimeException(e);
+                        } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -94,15 +106,23 @@ public class XApplicationContext {
                 }
             }
             //Aware beanName回调
-            if (object instanceof BeanNameAware){
+            if (object instanceof BeanNameAware) {
                 ((BeanNameAware) object).setBeanName(beanName);
             }
 
+            for (BeanPostProcesson beanPostProcesson : beanPostProcessonList) {
+                beanPostProcesson.postProcessBeforeInitialization(beanName,object);
+            }
             //初始化
-            if (object instanceof InitializingBean){
+            if (object instanceof InitializingBean) {
                 ((InitializingBean) object).afterPropertiesSet();
             }
 
+            for (BeanPostProcesson beanPostProcesson : beanPostProcessonList) {
+                object = beanPostProcesson.postProcessAfterInitialization(beanName, object);
+            }
+
+            //BeanPostProcesson 初始化后 AOP
             return object;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
