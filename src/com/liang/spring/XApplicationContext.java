@@ -93,6 +93,11 @@ public class XApplicationContext {
                     field.set(object, getBean(field.getName()));
                 }
             }
+            //Aware beanName回调
+            if (object instanceof BeanNameAware){
+                ((BeanNameAware) object).setBeanName(beanName);
+            }
+
             return object;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
