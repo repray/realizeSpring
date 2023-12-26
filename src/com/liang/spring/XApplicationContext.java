@@ -98,6 +98,11 @@ public class XApplicationContext {
                 ((BeanNameAware) object).setBeanName(beanName);
             }
 
+            //初始化
+            if (object instanceof InitializingBean){
+                ((InitializingBean) object).afterPropertiesSet();
+            }
+
             return object;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);

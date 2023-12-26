@@ -1,18 +1,17 @@
 package com.liang.service;
 
-import com.liang.spring.Autowired;
-import com.liang.spring.BeanNameAware;
-import com.liang.spring.Component;
-import com.liang.spring.Scope;
+import com.liang.spring.*;
 
 @Component
 //@Scope("prototype")
-public class UserService implements BeanNameAware {
+public class UserService implements BeanNameAware, InitializingBean {
 
     @Autowired
     private OrderService orderService;
 
     private String beanName;
+
+    private String remark;
 
     public void test() {
         System.out.println(orderService);
@@ -23,4 +22,8 @@ public class UserService implements BeanNameAware {
         this.beanName = beanName;
     }
 
+    @Override
+    public void afterPropertiesSet() {
+        System.out.println("test: afterPropertiesSet");
+    }
 }
