@@ -26,12 +26,12 @@ public class XBeanPostProcesson implements BeanPostProcesson {
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     System.out.println("代理逻辑");
+                    // 调用反射的invoke方法,所以在 userservice.test()方法注释掉时,则不会执行该段代码
                     return method.invoke(bean,args);
                 }
             });
             return proxyObject;
         }
         return bean;
-
     }
 }
